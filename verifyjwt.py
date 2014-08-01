@@ -20,22 +20,20 @@ class GoogleIdToken:
         self._jwt = jwt
         self.token = None
 
-    def is_valid(self, aud, iss=_GOOGLE_ISS_URI):
-        def validate(res):
-            certs = json.loads(to_unicode(res.body))
-            for pem in certs.values():
-                try:
-                    token = jwt.decode(self._jwt, key=self._get_pubkey(pem))
-                except (jwt.DecodeError, jwt.ExpiredSignature): pass
-                else:
-                    if token['aud'] == aud and token['iss'] == iss:
-                        self.token = token
-                        return True
+    def is_valid(self, res, aud, iss=_GOOGLE_ISS_URI):
+        certs = json.loads(to_unicode(res.body))
+        for pem in certs.values():
+            try:
+                token = jwt.decode(self._jwt, key=self._get_pubkey(pem))
+            except (jwt.DecodeError, jwt.ExpiredSignature): pass
+            else:
+                if token['aud'] == aud and token['iss'] == iss:
+                    self.token = token
+                    return True
             return False
-        return self._get_certs(validate)
 
-    def _get_certs(self, callback):
-        return AsyncHTTPClient().fetch(GoogleIdToken._GOOGLE_CERTS_URI, callback)
+    def get_certs(self):
+        return AsyncHTTPClient().fetch(GoogleIdToken._GOOGLE_CERTS_URI)
 
     def _get_pubkey(self, pem):
         der = PEM_cert_to_DER_cert(pem)

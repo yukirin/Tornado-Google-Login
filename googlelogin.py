@@ -51,7 +51,7 @@ class GoogleOAuth2LoginHandler(tornado.web.RequestHandler, GoogleOAuth2Mixin):
 
             user = yield self.get_authenticated_user()
             g = verifyjwt.GoogleIdToken(user['id_token'])
-            valid = yield g.is_valid(aud=self.settings['google_oauth']['key'])
+            valid = g.is_valid((yield g.get_certs()), aud=self.settings['google_oauth']['key'])
 
             if not valid: raise tornado.web.HTTPError(400, "Invalid ID Token")
             self.write(g.token)  # e.g. self.db.save(user)
